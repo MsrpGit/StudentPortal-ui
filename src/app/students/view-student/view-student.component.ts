@@ -34,7 +34,8 @@ export class ViewStudentComponent implements OnInit {
     }
   };
   genderList: Gender[] = [];
-
+  isNewStudent = false;
+  header = '';
   constructor(private studentService: StudentService, private readonly route: ActivatedRoute,
     private readonly genderService: GenderService,
     private snackBar: MatSnackBar,
@@ -49,14 +50,25 @@ export class ViewStudentComponent implements OnInit {
     )
 
     if (this.studentId) {
-      this.studentService.getStudent(this.studentId).subscribe(
-        (SuccessResponse) => {
-          this.student = SuccessResponse;
-        },
-        (errorResponse) => {
-          console.log(errorResponse);
-        }
-      );
+      // if the route contains the 'Add' new student functionality
+      if (this.studentId.toLocaleLowerCase() === 'add') {
+        this.isNewStudent = true;
+        this.header = 'Add New Student';
+      }
+      else {
+        this.isNewStudent = false;
+        this.header = 'Edit Student';
+        //Otherwise existing student functionality
+        this.studentService.getStudent(this.studentId).subscribe(
+          (SuccessResponse) => {
+            this.student = SuccessResponse;
+          },
+          (errorResponse) => {
+            console.log(errorResponse);
+          }
+        );
+      }
+
     }
 
     this.genderService.getGenderList()
@@ -100,6 +112,27 @@ export class ViewStudentComponent implements OnInit {
       }
     )
 
+  }
+
+  onAdd(): void {
+    // Submit form date to api
+    this.studentService.addStudent(this.student)
+      .subscribe(
+        (successResponse) => {
+          this.snackBar.open('Student added successfully', undefined, {
+            duration: 2000
+          });
+
+          setTimeout(() => {
+            this.router.navigateByUrl(`students/${successResponse.id}`);
+          }, 2000);
+
+        },
+        (errorResponse) => {
+          // Log
+          console.log(errorResponse);
+        }
+      );
   }
 
 }
